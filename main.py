@@ -22,8 +22,9 @@ load_dotenv()   # load .env file before anything else reads os.getenv()
 #  Path setup — make sub-folders importable
 # ─────────────────────────────────────────────
 _BASE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.join(_BASE, "global"))          # config, database, utils
-sys.path.insert(0, os.path.join(_BASE, "AiMarketResearch")) # services, routers, models
+sys.path.insert(0, _BASE)                                    # InputConfig package root
+sys.path.insert(0, os.path.join(_BASE, "global"))           # config, database, utils
+sys.path.insert(0, os.path.join(_BASE, "AiMarketResearch"))  # services, routers, models
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -32,6 +33,7 @@ from fastapi.staticfiles import StaticFiles
 
 from database import init_db
 from routers.analyze import router as analyze_router
+from InputConfig.routers.analyze import router as input_router
 
 # ─────────────────────────────────────────────
 #  Logging
@@ -46,14 +48,14 @@ logging.basicConfig(
 #  App
 # ─────────────────────────────────────────────
 app = FastAPI(
-    title="Product & Market Intelligence Engine",
+    title="CommerceOS AI — Market Intelligence Engine",
     description=(
-        "Pre-launch decision system for beginner e-commerce sellers. "
-        "Combines Google Trends, Amazon signals, mathematical scoring, "
-        "profit simulation, and LLM strategic reasoning (Llama3:8B via Ollama)."
+        "End-to-end AI market research platform for e-commerce sellers. "
+        "Module 1: Input configuration & pipeline orchestration. "
+        "Module 2: Real-time market signals, scoring, profit simulation & LLM strategy."
     ),
-    version="1.0.0",
-    contact={"name": "Module 2 — Hackathon Build"},
+    version="2.0.0",
+    contact={"name": "CommerceOS AI — Hackathon Build"},
 )
 
 # ─────────────────────────────────────────────
@@ -69,23 +71,30 @@ app.add_middleware(
 # ─────────────────────────────────────────────
 #  Routes
 # ─────────────────────────────────────────────
-app.include_router(analyze_router, tags=["Intelligence"])
+app.include_router(input_router,   tags=["Module 1 — Input Config"])   # POST /analyze
+app.include_router(analyze_router, tags=["Module 2 — Intelligence"])   # POST /analyze-product
 
 # ─────────────────────────────────────────────
-#  Frontend — served at /
+#  Frontend
+#  /      → Module 1 UI  (InputConfig)
+#  /ui    → Module 2 UI  (AiMarketResearch)
 # ─────────────────────────────────────────────
-_FRONTEND = os.path.join(os.path.dirname(__file__), "AiMarketResearch", "frontend")
+_M1_FRONTEND = os.path.join(_BASE, "InputConfig",       "frontend")
+_M2_FRONTEND = os.path.join(_BASE, "AiMarketResearch",  "frontend")
 
-if os.path.isdir(_FRONTEND):
-    app.mount("/ui", StaticFiles(directory=_FRONTEND, html=True), name="frontend")
+if os.path.isdir(_M1_FRONTEND):
+    app.mount("/assets", StaticFiles(directory=_M1_FRONTEND), name="m1_assets")
+
+if os.path.isdir(_M2_FRONTEND):
+    app.mount("/ui", StaticFiles(directory=_M2_FRONTEND, html=True), name="m2_frontend")
 
 
 @app.get("/", include_in_schema=False)
-async def serve_frontend():
-    index = os.path.join(_FRONTEND, "index.html")
+async def serve_m1_frontend():
+    index = os.path.join(_M1_FRONTEND, "index.html")
     if os.path.exists(index):
         return FileResponse(index, media_type="text/html")
-    return {"message": "Market Intelligence Engine API", "docs": "/docs"}
+    return {"message": "CommerceOS AI API", "docs": "/docs"}
 
 
 # ─────────────────────────────────────────────

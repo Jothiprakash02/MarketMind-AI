@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CommerceOS AI — Market Research</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0d0f14;
+      --surface:   #161920;
+      --card:      #1e2230;
+      --border:    #2a2f42;
+      --accent:    #6c63ff;
+      --accent2:   #00d4aa;
+      --text:      #e2e8f0;
+      --muted:     #8892a4;
+      --danger:    #f56565;
+      --success:   #48bb78;
+      --warn:      #ed8936;
+      --radius:    12px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 16px 80px;
+    }
+
+    /* ── Header ── */
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    header .badge {
+      display: inline-block;
+      background: linear-gradient(135deg, #6c63ff22, #00d4aa22);
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 4px 14px;
+      border-radius: 20px;
+      margin-bottom: 14px;
+    }
+    header h1 {
+      font-size: clamp(24px, 4vw, 38px);
+      font-weight: 800;
+      background: linear-gradient(135deg, #e2e8f0 40%, var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    header p {
+      color: var(--muted);
+      font-size: 15px;
+      margin-top: 8px;
+    }
+
+    /* ── Main grid ── */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 24px;
+      width: 100%;
+      max-width: 1200px;
+    }
+    @media (max-width: 900px) {
+      .main-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ── Card ── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+    }
+    .card-title {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-title span { color: var(--accent); font-size: 16px; }
+
+    /* ── Form ── */
+    .form-group { margin-bottom: 18px; }
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 7px;
+      letter-spacing: 0.5px;
+    }
+    input, select {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 11px 14px;
+      color: var(--text);
+      font-size: 14px;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    input:focus, select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px #6c63ff22;
+    }
+    input::placeholder { color: var(--muted); }
+    select option { background: var(--card); }
+
+    /* ── Button ── */
+    button#analyzeBtn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--accent), #8b5cf6);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: 0.5px;
+      transition: opacity .2s, transform .1s;
+      margin-top: 8px;
+    }
+    button#analyzeBtn:hover   { opacity: .9; }
+    button#analyzeBtn:active  { transform: scale(.98); }
+    button#analyzeBtn:disabled { opacity: .5; cursor: not-allowed; }
+
+    /* ── Spinner ── */
+    .spinner {
+      display: none;
+      width: 18px; height: 18px;
+      border: 2px solid #ffffff44;
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      margin: 0 auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Results panel ── */
+    #resultPanel { display: none; }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 20px;
+      margin-bottom: 18px;
+    }
+    .status-success { background:#48bb7820; color:var(--success); border:1px solid var(--success); }
+    .status-partial  { background:#ed893620; color:var(--warn);    border:1px solid var(--warn); }
+    .status-error    { background:#f5656520; color:var(--danger);  border:1px solid var(--danger); }
+
+    /* ── Score grid ── */
+    .score-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .score-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 12px;
+      text-align: center;
+    }
+    .score-box .val {
+      font-size: 26px;
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    .score-box .lbl { font-size: 11px; color: var(--muted); font-weight: 600; }
+    .score-high   { color: var(--success); }
+    .score-medium { color: var(--warn); }
+    .score-low    { color: var(--danger); }
+
+    /* ── Profit section ── */
+    .profit-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .profit-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 12px;
+      text-align: center;
+    }
+    .profit-card .scenario-name {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .profit-card .profit-val {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--accent2);
+    }
+    .profit-card .profit-sub { font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+    /* ── Strategy section ── */
+    .strategy-section { margin-bottom: 16px; }
+    .strategy-section h4 {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+    .strategy-section p {
+      font-size: 14px;
+      color: var(--text);
+      line-height: 1.7;
+      background: var(--surface);
+      border-left: 3px solid var(--accent);
+      padding: 10px 14px;
+      border-radius: 0 8px 8px 0;
+    }
+
+    /* ── Raw JSON toggle ── */
+    .json-toggle {
+      font-size: 12px;
+      color: var(--muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 16px;
+      user-select: none;
+    }
+    .json-toggle:hover { color: var(--text); }
+    pre#rawJson {
+      display: none;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+      font-size: 12px;
+      color: #a0aec0;
+      overflow-x: auto;
+      margin-top: 8px;
+      max-height: 400px;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    /* ── Error box ── */
+    .error-box {
+      background: #f5656510;
+      border: 1px solid var(--danger);
+      border-radius: 8px;
+      padding: 14px;
+      color: var(--danger);
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="badge">CommerceOS AI</div>
+  <h1>AI Market Research Engine</h1>
+  <p>Enter your seller profile — get a full market intelligence report instantly</p>
+</header>
+
+<div class="main-grid">
+
+  <!-- ── LEFT: Input Form ── -->
+  <section class="card">
+    <div class="card-title"><span>🎯</span> Seller Profile</div>
+
+    <div class="form-group">
+      <label for="niche">Product Niche / Keyword</label>
+      <input id="niche" type="text" placeholder="e.g. fitness tracker, portable blender" />
+    </div>
+
+    <div class="form-group">
+      <label for="budget">Budget (local currency)</label>
+      <input id="budget" type="number" placeholder="e.g. 50000" min="1" />
+    </div>
+
+    <div class="form-group">
+      <label for="risk_level">Risk Level</label>
+      <select id="risk_level">
+        <option value="conservative">Conservative — Safety first, lower returns</option>
+        <option value="moderate" selected>Moderate — Balanced risk &amp; reward</option>
+        <option value="aggressive">Aggressive — Higher risk, higher upside</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="country">Target Market</label>
+      <select id="country">
+        <option value="India" selected>India (Amazon.in / ₹)</option>
+        <option value="USA">USA (Amazon.com / $)</option>
+        <option value="UK">UK (Amazon.co.uk / £)</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="experience">Your Experience Level</label>
+      <select id="experience">
+        <option value="beginner" selected>Beginner — Just starting out</option>
+        <option value="intermediate">Intermediate — Have sold before</option>
+        <option value="advanced">Advanced — Experienced seller</option>
+      </select>
+    </div>
+
+    <button id="analyzeBtn" onclick="runAnalysis()">
+      <span id="btnText">🚀 Analyze Market</span>
+      <div class="spinner" id="spinner"></div>
+    </button>
+  </section>
+
+  <!-- ── RIGHT: Results Panel ── -->
+  <section class="card" id="resultPanel">
+    <div class="card-title"><span>📊</span> Intelligence Report</div>
+    <div id="resultContent"><!-- filled by JS --></div>
+  </section>
+
+</div>
+
+<script>
+  const API = "http://localhost:8000";
+
+  async function runAnalysis() {
+    const niche      = document.getElementById("niche").value.trim();
+    const budget     = parseFloat(document.getElementById("budget").value);
+    const risk_level = document.getElementById("risk_level").value;
+    const country    = document.getElementById("country").value;
+    const experience = document.getElementById("experience").value;
+
+    // Validate
+    if (!niche)       return alert("Please enter a product niche.");
+    if (!budget || budget <= 0) return alert("Please enter a valid budget > 0.");
+
+    const btn = document.getElementById("analyzeBtn");
+    const spinner = document.getElementById("spinner");
+    const btnText = document.getElementById("btnText");
+    btn.disabled = true;
+    btnText.style.display = "none";
+    spinner.style.display = "block";
+
+    const panel = document.getElementById("resultPanel");
+    panel.style.display = "block";
+    document.getElementById("resultContent").innerHTML = `
+      <div style="text-align:center;padding:40px;color:var(--muted)">
+        <div class="spinner" style="display:block;margin:0 auto 12px;width:32px;height:32px;border-width:3px"></div>
+        Collecting market signals…
+      </div>`;
+
+    try {
+      const res  = await fetch(`${API}/analyze`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ niche, budget, risk_level, country, experience }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        showError(data.detail || JSON.stringify(data));
+      } else {
+        renderResult(data);
+      }
+    } catch (err) {
+      showError(`Could not connect to the API server.<br><small>${err}</small>`);
+    } finally {
+      btn.disabled = false;
+      btnText.style.display = "inline";
+      spinner.style.display = "none";
+    }
+  }
+
+  function scoreClass(v) {
+    if (v >= 65) return "score-high";
+    if (v >= 40) return "score-medium";
+    return "score-low";
+  }
+
+  function fmt(v, sym = "") {
+    if (typeof v !== "number") return "—";
+    return sym + v.toLocaleString("en-IN", { maximumFractionDigits: 0 });
+  }
+
+  function renderResult(data) {
+    const m   = data.market_analysis || {};
+    const cfg = data.input_config    || {};
+    const sym = cfg.currency_symbol  || "₹";
+    const scenarios = m.profit_scenarios || [];
+
+    const statusClass = { success: "status-success", partial: "status-partial", error: "status-error" };
+    const statusIcon  = { success: "✅", partial: "⚠️", error: "❌" };
+    const st = data.status || "success";
+
+    let scenarioHtml = scenarios.map(s => `
+      <div class="profit-card">
+        <div class="scenario-name">${s.scenario || "—"}</div>
+        <div class="profit-val">${fmt(s.net_profit, sym)}</div>
+        <div class="profit-sub">${fmt(s.estimated_monthly_sales)} units/mo</div>
+        <div class="profit-sub">ROI ${s.roi_percent != null ? s.roi_percent.toFixed(1)+"%" : "—"}</div>
+      </div>`).join("") || `<p style="color:var(--muted);font-size:13px">No scenario data available.</p>`;
+
+    document.getElementById("resultContent").innerHTML = `
+      <div class="${statusClass[st] || 'status-success'} status-badge">
+        ${statusIcon[st] || "✅"} ${st.toUpperCase()} ${data.message ? "— " + data.message : ""}
+      </div>
+
+      <div class="score-grid">
+        <div class="score-box">
+          <div class="val ${scoreClass(m.demand_score||0)}">${(m.demand_score||0).toFixed(0)}</div>
+          <div class="lbl">Demand Score</div>
+        </div>
+        <div class="score-box">
+          <div class="val ${scoreClass(100-(m.competition_score||50))}">${(m.competition_score||0).toFixed(0)}</div>
+          <div class="lbl">Competition</div>
+        </div>
+        <div class="score-box">
+          <div class="val ${scoreClass((m.viability_score||0)+50)}">${(m.viability_score||0).toFixed(0)}</div>
+          <div class="lbl">Viability</div>
+        </div>
+        <div class="score-box">
+          <div class="val" style="color:var(--accent2)">${((m.confidence_score||0)*100).toFixed(0)}%</div>
+          <div class="lbl">Confidence</div>
+        </div>
+        <div class="score-box">
+          <div class="val" style="color:var(--text);font-size:18px">${m.risk_level||"—"}</div>
+          <div class="lbl">Risk Level</div>
+        </div>
+        <div class="score-box">
+          <div class="val" style="color:var(--text);font-size:16px">${m.viability_label||"—"}</div>
+          <div class="lbl">Viability Label</div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
+        <div class="score-box">
+          <div class="val" style="color:var(--accent2);font-size:20px">${fmt(m.avg_market_price, sym)}</div>
+          <div class="lbl">Avg Market Price</div>
+        </div>
+        <div class="score-box">
+          <div class="val" style="color:var(--accent);font-size:20px">${fmt(m.suggested_price, sym)}</div>
+          <div class="lbl">Suggested Price</div>
+        </div>
+        <div class="score-box">
+          <div class="val" style="color:var(--success);font-size:20px">${fmt(m.estimated_monthly_profit, sym)}</div>
+          <div class="lbl">Monthly Profit (Exp.)</div>
+        </div>
+        <div class="score-box">
+          <div class="val" style="color:var(--text);font-size:20px">${m.break_even_months != null ? m.break_even_months.toFixed(1)+" mo" : "—"}</div>
+          <div class="lbl">Break-even</div>
+        </div>
+      </div>
+
+      <div class="card-title" style="margin-bottom:12px"><span>💰</span> Profit Scenarios</div>
+      <div class="profit-grid">${scenarioHtml}</div>
+
+      <div class="card-title" style="margin-bottom:12px"><span>🧠</span> AI Strategy</div>
+
+      <div class="strategy-section">
+        <h4>Final Recommendation</h4>
+        <p>${m.final_recommendation || "—"}</p>
+      </div>
+      <div class="strategy-section">
+        <h4>Positioning Strategy</h4>
+        <p>${m.positioning_strategy || "—"}</p>
+      </div>
+      <div class="strategy-section">
+        <h4>Market Entry Advice</h4>
+        <p>${m.market_entry_advice || "—"}</p>
+      </div>
+      <div class="strategy-section">
+        <h4>Risk Explanation</h4>
+        <p>${m.risk_explanation || "—"}</p>
+      </div>
+
+      <div class="json-toggle" onclick="toggleJson()">
+        <span id="jsonArrow">▶</span> View raw JSON response
+      </div>
+      <pre id="rawJson">${JSON.stringify(data, null, 2)}</pre>
+    `;
+  }
+
+  function showError(msg) {
+    document.getElementById("resultPanel").style.display = "block";
+    document.getElementById("resultContent").innerHTML =
+      `<div class="error-box">❌ Error: ${msg}</div>`;
+  }
+
+  function toggleJson() {
+    const el = document.getElementById("rawJson");
+    const arrow = document.getElementById("jsonArrow");
+    const shown = el.style.display === "block";
+    el.style.display = shown ? "none" : "block";
+    arrow.textContent = shown ? "▶" : "▼";
+  }
+
+  // Allow Enter key on niche input
+  document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("niche").addEventListener("keydown", e => {
+      if (e.key === "Enter") runAnalysis();
+    });
+  });
+</script>
+</body>
+</html>
