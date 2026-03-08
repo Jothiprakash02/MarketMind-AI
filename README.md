@@ -39,7 +39,7 @@ Wait 10–15 seconds, then open **http://localhost:5173**
 
 ```bash
 # Stop all services
-scripts\stop-all.bat        # Windows
+scripts\stop-all.bat        ## Windows
 ./scripts/stop-all.sh       # Linux / macOS
 ```
 
